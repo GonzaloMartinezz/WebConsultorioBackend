@@ -45,8 +45,10 @@ app.use('/api/historias', require('./src/routes/historiaRoutes'));
 // ==========================================
 // LEVANTAR SERVIDOR
 // ==========================================
+// Render inyecta su propio puerto en process.env.PORT. 
+// Si no existe (como en tu PC), usa el 5000.
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en modo ${process.env.NODE_ENV} en el puerto ${PORT}`);
+  console.log(`🚀 Servidor corriendo en el puerto ${PORT}`);
 });
