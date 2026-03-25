@@ -9,9 +9,9 @@ const generateToken = (res, userId) => {
   // Guardamos el token en una cookie segura
   res.cookie('jwt', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV !== 'development', // true en producción (HTTPS)
-    sameSite: 'strict', // Previene ataques CSRF
-    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 días en milisegundos
+    secure: true,            // ¡NUEVO! Obliga a usar HTTPS
+    sameSite: 'none',        // ¡NUEVO! Permite que la cookie viaje de Render a Vercel
+    maxAge: 30 * 24 * 60 * 60 * 1000 
   });
 };
 

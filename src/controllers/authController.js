@@ -65,6 +65,8 @@ exports.logoutUsuario = (req, res) => {
   // Sobrescribimos la cookie actual con una vacía que expira en 1 segundo
   res.cookie('jwt', '', {
     httpOnly: true,
+    secure: true,
+    sameSite: 'none',
     expires: new Date(0)
   });
   res.status(200).json({ mensaje: 'Sesión cerrada correctamente' });
