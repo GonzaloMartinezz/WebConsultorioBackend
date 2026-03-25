@@ -18,7 +18,7 @@ const app = express();
 // ==========================================
 // Configuración estricta de CORS para permitir cookies desde el Frontend
 app.use(cors({
-  origin: process.env.FRONTEND_URL, // Tu dominio de React/Vercel
+  origin: 'http://localhost:5173', // ¡FUERZA EL PUERTO ASÍ, EN TEXTO DURO!
   credentials: true, // Crucial para enviar y recibir cookies (JWT)
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 }));
@@ -40,6 +40,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', require('./src/routes/authRoutes'));
 app.use('/api/turnos', require('./src/routes/turnoRoutes'));
 app.use('/api/pacientes', require('./src/routes/pacienteRoutes'));
+app.use('/api/historias', require('./src/routes/historiaRoutes'));
 
 // ==========================================
 // LEVANTAR SERVIDOR

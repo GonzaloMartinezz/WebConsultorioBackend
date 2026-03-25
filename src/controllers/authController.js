@@ -59,12 +59,26 @@ exports.loginUsuario = async (req, res) => {
   }
 };
 
-// @desc    Cerrar sesión (Borrar Cookie)
+// @desc    Cerrar sesión y destruir la cookie
 // @route   POST /api/auth/logout
 exports.logoutUsuario = (req, res) => {
+  // Sobrescribimos la cookie actual con una vacía que expira en 1 segundo
   res.cookie('jwt', '', {
     httpOnly: true,
-    expires: new Date(0) // Hacemos expirar la cookie instantáneamente
+    expires: new Date(0)
   });
   res.status(200).json({ mensaje: 'Sesión cerrada correctamente' });
+};
+
+// @desc    Obtener todos los usuarios que son pacientes
+// @route   GET /api/auth/pacientes
+exports.obtenerPacientes = async (req, res) => {
+  try {
+    // Buscamos solo a los que tienen rol de 'paciente' y excluimos la contraseña por seguridad
+    const pacientes = await Usuario.find({ rol: 'paciente' }).select('-password');
+    res.status(200).json(pacientes);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Hubo un error al obtener los pacientes' });
+  }
 };

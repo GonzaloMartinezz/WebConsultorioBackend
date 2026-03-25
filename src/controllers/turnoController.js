@@ -63,3 +63,20 @@ exports.actualizarEstadoTurno = async (req, res) => {
     res.status(500).json({ error: 'Error al actualizar el estado', detalle: error.message });
   }
 };
+
+// @desc    Obtener turnos de un paciente específico por su nombre
+// @route   GET /api/turnos/paciente/:nombre/:apellido
+exports.obtenerMisTurnos = async (req, res) => {
+  try {
+    const { nombre, apellido } = req.params;
+    // Buscamos los turnos que coincidan exactamente con el nombre y apellido del paciente logueado
+    const misTurnos = await Turno.find({ 
+      nombrePaciente: nombre, 
+      apellidoPaciente: apellido 
+    }).sort({ createdAt: -1 }); // Los ordenamos del más nuevo al más viejo
+    
+    res.status(200).json(misTurnos);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al buscar los turnos del paciente' });
+  }
+};
