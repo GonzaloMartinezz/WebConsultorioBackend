@@ -16,24 +16,14 @@ const app = express();
 // ==========================================
 // MIDDLEWARES GLOBALES
 // ==========================================
-// 1. Lista VIP de orígenes permitidos (local + producción en Vercel)
-const origenesPermitidos = [
-  'http://localhost:5173',
-  'https://app-consultorio-odontologico.vercel.app'
-];
-
-// 2. Guardia de seguridad inteligente con lista dinámica
+// Lista exacta de orígenes permitidos (local + Vercel)
 app.use(cors({
-  origin: function (origin, callback) {
-    // Permite Postman/herramientas sin origen, o si está en la lista VIP
-    if (!origin || origenesPermitidos.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Bloqueado por CORS'));
-    }
-  },
-  credentials: true, // ¡VITAL para que las cookies viajen entre dominios!
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
+  origin: [
+    'http://localhost:5173',
+    'https://app-consultorio-odontologico.vercel.app'
+  ],
+  credentials: true, // ESTO ES LO ÚNICO QUE PERMITE INICIAR SESIÓN
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
 }));
 
 app.use(express.json()); // Permite recibir JSON en los req.body
