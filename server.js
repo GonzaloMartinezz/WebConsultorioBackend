@@ -16,10 +16,23 @@ const app = express();
 // ==========================================
 // MIDDLEWARES GLOBALES
 // ==========================================
-// Configuración estricta de CORS para permitir cookies desde el Frontend
+// 1. Lista VIP de orígenes permitidos (local + producción en Vercel)
+const origenesPermitidos = [
+  'http://localhost:5173',
+  'https://app-consultorio-odontologico.vercel.app'
+];
+
+// 2. Guardia de seguridad inteligente con lista dinámica
 app.use(cors({
-  origin: process.env.FRONTEND_URL, // Tu link de Vercel configurado en Render
-  credentials: true, // ¡CRUCIAL! Permite que las cookies viajen entre dominios
+  origin: function (origin, callback) {
+    // Permite Postman/herramientas sin origen, o si está en la lista VIP
+    if (!origin || origenesPermitidos.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Bloqueado por CORS'));
+    }
+  },
+  credentials: true, // ¡VITAL para que las cookies viajen entre dominios!
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 }));
 
