@@ -3,7 +3,8 @@ const router = express.Router();
 const { registrarUsuario, loginUsuario, logoutUsuario, obtenerPacientes } = require('../controllers/authController');
 const { protegerRuta, adminRole } = require('../middlewares/authMiddleware');
 
-router.post('/registrar', registrarUsuario);
+router.post('/registrar', registrarUsuario); // Ruta en español (compatibilidad)
+router.post('/register', registrarUsuario);  // Alias en inglés (para el Frontend)
 router.post('/login', loginUsuario);
 router.post('/logout', logoutUsuario);
 router.get('/pacientes', protegerRuta, adminRole, obtenerPacientes);
