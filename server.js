@@ -18,8 +18,8 @@ const app = express();
 // ==========================================
 // Configuración estricta de CORS para permitir cookies desde el Frontend
 app.use(cors({
-  origin: 'http://localhost:5173', // ¡FUERZA EL PUERTO ASÍ, EN TEXTO DURO!
-  credentials: true, // Crucial para enviar y recibir cookies (JWT)
+  origin: process.env.FRONTEND_URL, // Tu link de Vercel configurado en Render
+  credentials: true, // ¡CRUCIAL! Permite que las cookies viajen entre dominios
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 }));
 
