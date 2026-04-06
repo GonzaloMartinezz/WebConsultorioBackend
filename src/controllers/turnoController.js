@@ -97,7 +97,8 @@ exports.obtenerTurnos = async (req, res) => {
     const turnos = await Turno.find().sort({ fecha: 1, hora: 1 });
     res.status(200).json(turnos);
   } catch (error) {
-    res.status(500).json({ error: 'Error al obtener los turnos' });
+    console.error("Error al obtener turnos:", error);
+    res.status(500).json({ error: 'Hubo un error al obtener los turnos' });
   }
 };
 
