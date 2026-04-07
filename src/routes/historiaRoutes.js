@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { obtenerHistoria, actualizarDiente } = require('../controllers/historiaController');
+const { getHistoriaByPaciente, updateOdontograma, updateNotas } = require('../controllers/historiaController');
 const { protegerRuta, adminRole } = require('../middlewares/authMiddleware');
 
 // Rutas protegidas (Solo Odontólogos/Admin)
-router.get('/:idPaciente', protegerRuta, adminRole, obtenerHistoria);
-router.post('/:idPaciente/diente', protegerRuta, adminRole, actualizarDiente);
+router.get('/:id', protegerRuta, adminRole, getHistoriaByPaciente);
+router.put('/:id/odontograma', protegerRuta, adminRole, updateOdontograma);
+router.put('/:id/notas', protegerRuta, adminRole, updateNotas);
 
 module.exports = router;

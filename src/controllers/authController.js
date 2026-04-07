@@ -5,7 +5,8 @@ const generateToken = require('../utils/generateToken');
 // @route   POST /api/auth/registrar
 exports.registrarUsuario = async (req, res) => {
   try {
-    const { nombre, apellido, email, password, rol } = req.body;
+    let { nombre, apellido, email, password, rol } = req.body;
+    email = email.toLowerCase(); // Normalizamos el correo
 
     // Verificar si el usuario ya existe
     const usuarioExiste = await Usuario.findOne({ email });
@@ -35,7 +36,8 @@ exports.registrarUsuario = async (req, res) => {
 // @route   POST /api/auth/login
 exports.loginUsuario = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
+    email = email.toLowerCase(); // Normalizamos el correo
 
     // Buscar al usuario por email
     const usuario = await Usuario.findOne({ email });

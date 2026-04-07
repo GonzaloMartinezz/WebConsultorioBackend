@@ -1,45 +1,67 @@
 const HistoriaClinica = require('../models/HistoriaClinica');
 
-// 1. Buscar la historia de un paciente (o crearla si es nuevo)
-exports.obtenerHistoria = async (req, res) => {
+// @desc    Obtener historia clínica por ID de paciente (o crearla si no existe)
+// @route   GET /api/historias/:id
+// @access  Privado (Admin)
+exports.getHistoriaByPaciente = async (req, res) => {
   try {
-    const { idPaciente } = req.params;
-    let historia = await HistoriaClinica.findOne({ paciente: idPaciente });
-    
-    // Si el paciente es nuevo y no tiene ficha, le creamos una en blanco automáticamente
+    let historia = await HistoriaClinica.findOne({ paciente: req.params.id });
+
     if (!historia) {
-      historia = await HistoriaClinica.create({ paciente: idPaciente, odontograma: [] });
+      // Si no existe, la creamos vacía en el momento (legajo digital nuevo)
+      historia = await HistoriaClinica.create({ paciente: req.params.id, odontograma: [] });
     }
-    
+
+    // Incrementamos el contador cada vez que el admin abre su ficha
+    historia.contadorVisitas += 1;
+    await historia.save();
+
     res.status(200).json(historia);
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener la historia clínica' });
   }
 };
 
-// 2. Agregar o actualizar el estado de un diente
-exports.actualizarDiente = async (req, res) => {
+// @desc    Actualizar el odontograma completo de un paciente
+// @route   PUT /api/historias/:id/odontograma
+// @access  Privado (Admin)
+exports.updateOdontograma = async (req, res) => {
   try {
-    const { idPaciente } = req.params;
-    const { diente, diagnostico } = req.body;
+    const { odontograma } = req.body;
+    const historia = await HistoriaClinica.findOneAndUpdate(
+      { paciente: req.params.id },
+      { odontograma, ultimaActualizacion: Date.now() },
+      { new: true }
+    );
 
-    let historia = await HistoriaClinica.findOne({ paciente: idPaciente });
-
-    // Verificamos si ese diente ya tenía algo anotado antes
-    const indexDiente = historia.odontograma.findIndex(d => d.diente === diente);
-
-    if (indexDiente >= 0) {
-      // Si ya existía, lo actualizamos (ej: pasó de Caries a Curado)
-      historia.odontograma[indexDiente].diagnostico = diagnostico;
-      historia.odontograma[indexDiente].fecha = Date.now();
-    } else {
-      // Si es un diente nuevo con problemas, lo agregamos a la lista
-      historia.odontograma.push({ diente, diagnostico });
+    if (!historia) {
+      return res.status(404).json({ error: 'Historia clínica no encontrada' });
     }
 
-    await historia.save();
     res.status(200).json(historia);
   } catch (error) {
-    res.status(500).json({ error: 'Error al actualizar el odontograma' });
+    res.status(500).json({ error: 'Error al guardar el odontograma' });
+  }
+};
+
+// @desc    Actualizar notas generales de la historia clínica
+// @route   PUT /api/historias/:id/notas
+// @access  Privado (Admin)
+exports.updateNotas = async (req, res) => {
+  try {
+    const { notasGenerales } = req.body;
+    const historia = await HistoriaClinica.findOneAndUpdate(
+      { paciente: req.params.id },
+      { notasGenerales, ultimaActualizacion: Date.now() },
+      { new: true }
+    );
+
+    if (!historia) {
+      return res.status(404).json({ error: 'Historia clínica no encontrada' });
+    }
+
+    res.status(200).json(historia);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al actualizar las notas' });
   }
 };

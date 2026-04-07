@@ -1,22 +1,31 @@
 const mongoose = require('mongoose');
 
-const historiaSchema = new mongoose.Schema({
+const HistoriaClinicaSchema = new mongoose.Schema({
   paciente: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Usuario', // Lo enlazamos con el paciente registrado
+    ref: 'Usuario',
     required: true,
     unique: true // Cada paciente tiene solo UNA historia clínica
   },
-  // Aquí guardaremos el estado de cada diente que toquen en React
-  odontograma: [{
-    diente: { type: Number, required: true }, // Ej: 18, 21, 46
-    diagnostico: { type: String, required: true }, // Ej: 'Caries', 'Extracción', 'Sano'
-    fecha: { type: Date, default: Date.now }
-  }],
-  observacionesGenerales: {
-    type: String,
-    default: ''
-  }
-}, { timestamps: true });
+  contadorVisitas: { type: Number, default: 0 },
+  odontograma: [
+    {
+      idDiente: Number, // 11, 12, 48, etc. (nomenclatura FDI)
+      estado: { type: String, default: 'sano' }, // 'caries', 'ausente', 'implante', 'corona', etc.
+      notas: String
+    }
+  ],
+  archivos: [
+    {
+      nombre: String,
+      url: String,
+      fecha: { type: Date, default: Date.now }
+    }
+  ],
+  notasGenerales: { type: String, default: '' },
+  ultimaActualizacion: { type: Date, default: Date.now }
+}, {
+  timestamps: true
+});
 
-module.exports = mongoose.model('HistoriaClinica', historiaSchema);
+module.exports = mongoose.model('HistoriaClinica', HistoriaClinicaSchema);
