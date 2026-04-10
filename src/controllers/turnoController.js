@@ -71,6 +71,57 @@ const enviarEmailConfirmacion = async (turno) => {
   }
 };
 
+// Helper para enviar correo de NPS (Encuesta de Satisfacción)
+const enviarEmailNPS = async (turno) => {
+  if (!turno.email) return;
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER || 'tu-correo-clinica@gmail.com',
+      pass: process.env.EMAIL_PASS || 'tu-contraseña-de-aplicacion'
+    }
+  });
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+      <div style="background-color: #059669; color: white; padding: 20px; text-align: center;">
+        <h2 style="margin: 0; text-transform: uppercase;">¿Qué te pareció tu atención?</h2>
+      </div>
+      <div style="padding: 20px; color: #333; text-align: center;">
+        <p>Hola <strong>${turno.nombrePaciente}</strong>,</p>
+        <p>Gracias por confiar en <strong>C&M Dental</strong> para tu cuidado bucal.</p>
+        <p>Tu opinión es muy importante para nosotros. ¿Del 1 al 5, qué tan satisfecho estás con tu atención de hoy?</p>
+        
+        <div style="margin: 30px 0; display: flex; justify-content: center; gap: 10px;">
+            <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/encuesta?v=1&t=${turno._id}" style="display: inline-block; width: 40px; height: 40px; line-height: 40px; border-radius: 50%; background: #fee2e2; color: #991b1b; text-decoration: none; font-weight: bold; border: 1px solid #fecaca;">1</a>
+            <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/encuesta?v=2&t=${turno._id}" style="display: inline-block; width: 40px; height: 40px; line-height: 40px; border-radius: 50%; background: #ffedd5; color: #9a3412; text-decoration: none; font-weight: bold; border: 1px solid #fed7aa;">2</a>
+            <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/encuesta?v=3&t=${turno._id}" style="display: inline-block; width: 40px; height: 40px; line-height: 40px; border-radius: 50%; background: #fef9c3; color: #854d0e; text-decoration: none; font-weight: bold; border: 1px solid #fef08a;">3</a>
+            <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/encuesta?v=4&t=${turno._id}" style="display: inline-block; width: 40px; height: 40px; line-height: 40px; border-radius: 50%; background: #dcfce7; color: #166534; text-decoration: none; font-weight: bold; border: 1px solid #bbf7d0;">4</a>
+            <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/encuesta?v=5&t=${turno._id}" style="display: inline-block; width: 40px; height: 40px; line-height: 40px; border-radius: 50%; background: #d1fae5; color: #065f46; text-decoration: none; font-weight: bold; border: 1px solid #a7f3d0;">5</a>
+        </div>
+        
+        <p style="color: #666; font-size: 12px; border-top: 1px solid #eee; padding-top: 15px;">
+            ¡Muchas gracias por ayudarnos a mejorar!<br>Equipo C&M Dental.
+        </p>
+      </div>
+    </div>
+  `;
+
+  try {
+    const mailOptions = {
+      from: `"C&M Dental - Satisfacción" <${process.env.EMAIL_USER || 'noreply@clinica.com'}>`,
+      to: turno.email,
+      subject: '⭐ ¿Cómo estuvo tu visita hoy?',
+      html: htmlContent
+    };
+    await transporter.sendMail(mailOptions);
+    console.log("Email NPS enviado con éxito a:", turno.email);
+  } catch (error) {
+    console.error("Error al enviar email NPS:", error.message);
+  }
+};
+
 // @desc    Crear un nuevo turno solicitado por un paciente
 // @route   POST /api/turnos
 // @access  Público (Cualquiera puede pedir un turno desde la web)
@@ -111,7 +162,7 @@ exports.actualizarEstadoTurno = async (req, res) => {
     const turnoId = req.params.id;
 
     // Validar que el estado sea permitido
-    if (!['Pendiente', 'Confirmado', 'Cancelado', 'Atendido'].includes(estado)) {
+    if (!['Pendiente', 'Confirmado', 'Cancelado', 'Atendido', 'Finalizado'].includes(estado)) {
       return res.status(400).json({ error: 'Estado no válido' });
     }
 
@@ -132,6 +183,11 @@ exports.actualizarEstadoTurno = async (req, res) => {
     // Automáticamente enviar el email cuando se confirma en la Agenda
     if (estado === 'Confirmado') {
       await enviarEmailConfirmacion(turnoActualizado);
+    }
+
+    // Enviar encuesta NPS cuando el turno finaliza
+    if (estado === 'Finalizado') {
+      await enviarEmailNPS(turnoActualizado);
     }
 
     res.status(200).json({ 

@@ -11,7 +11,8 @@ const dienteSchema = new mongoose.Schema({
 const evolucionSchema = new mongoose.Schema({
   fecha: { type: Date, default: Date.now },
   profesional: { type: String, required: true },
-  tratamiento: { type: String, required: true }
+  tratamiento: { type: String, required: true },
+  archivos: [String] // URLs de Cloudinary o S3
 });
 
 const pacienteSchema = new mongoose.Schema({

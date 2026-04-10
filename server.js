@@ -14,6 +14,10 @@ dotenv.config();
 // Conectar a Base de Datos
 conectarDB();
 
+// Inicializar Tareas Programadas (Cron Jobs)
+const { inicializarCronJobs } = require('./src/services/cronService');
+inicializarCronJobs();
+
 const app = express();
 
 // ==========================================

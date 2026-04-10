@@ -12,7 +12,7 @@ const turnoSchema = new mongoose.Schema({
   motivo: { type: String, required: true },
   estado: { 
     type: String, 
-    enum: ['Pendiente', 'Confirmado', 'Cancelado', 'Atendido'], 
+    enum: ['Pendiente', 'Confirmado', 'Cancelado', 'Atendido', 'Finalizado'], 
     default: 'Pendiente' // Todo turno nuevo entra como pendiente para que el admin lo revise
   }
 }, {
