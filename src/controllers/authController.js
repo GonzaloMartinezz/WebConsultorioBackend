@@ -1,5 +1,6 @@
 const Usuario = require('../models/Usuario');
 const generateToken = require('../utils/generateToken');
+const bcrypt = require('bcryptjs');
 
 // @desc    Registrar un nuevo usuario
 // @route   POST /api/auth/registrar
@@ -84,5 +85,31 @@ exports.obtenerPacientes = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Hubo un error al obtener los pacientes' });
+  }
+};
+
+// @desc    Actualizar contraseña (Olvidé mi clave)
+// @route   POST /api/auth/recuperar-password
+exports.recuperarPassword = async (req, res) => {
+  try {
+    const { email, nuevaPassword } = req.body;
+    
+    // Convertimos a minúscula para evitar errores
+    const correoNormalizado = email.toLowerCase(); 
+
+    // Buscamos al usuario
+    const usuario = await Usuario.findOne({ email: correoNormalizado });
+    if (!usuario) {
+      return res.status(404).json({ error: 'No existe una cuenta con este correo.' });
+    }
+
+    // Encriptamos la nueva clave y guardamos
+    const salt = await bcrypt.genSalt(10);
+    usuario.password = await bcrypt.hash(nuevaPassword, salt);
+    await usuario.save();
+
+    res.status(200).json({ mensaje: 'Contraseña actualizada correctamente.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al cambiar la contraseña.' });
   }
 };

@@ -47,6 +47,7 @@ app.use('/api/auth', require('./src/routes/authRoutes'));
 app.use('/api/turnos', require('./src/routes/turnoRoutes'));
 app.use('/api/pacientes', require('./src/routes/pacienteRoutes'));
 app.use('/api/fichas', require('./src/routes/fichaRoutes'));
+app.use('/api/estadisticas', require('./src/routes/estadisticasRoutes'));
 
 // ==========================================
 // LEVANTAR SERVIDOR
