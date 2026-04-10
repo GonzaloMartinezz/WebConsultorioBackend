@@ -19,13 +19,26 @@ const app = express();
 // ==========================================
 // MIDDLEWARES GLOBALES
 // ==========================================
-// Lista exacta de orígenes permitidos (local + Vercel)
+// Configuración inteligente de CORS
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'https://app-consultorio-odontologico.vercel.app'
-  ],
-  credentials: true, // ESTO ES LO ÚNICO QUE PERMITE INICIAR SESIÓN
+  origin: function (origin, callback) {
+    // Lista de permitidos exactos
+    const permitidos = [
+      'http://localhost:5173',
+      'https://app-consultorio-odontologico.vercel.app',
+      'https://app-consultorio-odontologico-505or6ln5.vercel.app'
+    ];
+
+    // Permitimos si no hay origen (postman) 
+    // O si está en la lista exacta
+    // O (TRUCO MAGICO) si es cualquier link de Vercel que empiece con el nombre de tu app
+    if (!origin || permitidos.includes(origin) || (origin.startsWith('https://app-consultorio-odontologico') && origin.endsWith('.vercel.app'))) {
+      callback(null, true);
+    } else {
+      callback(new Error('Bloqueado por CORS'));
+    }
+  },
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
 }));
 
