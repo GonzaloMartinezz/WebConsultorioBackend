@@ -1,6 +1,7 @@
 const Usuario = require('../models/Usuario');
 const generateToken = require('../utils/generateToken');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 // @desc    Registrar un nuevo usuario
 // @route   POST /api/auth/registrar
@@ -37,28 +38,50 @@ exports.registrarUsuario = async (req, res) => {
 // @route   POST /api/auth/login
 exports.loginUsuario = async (req, res) => {
   try {
-    let { email, password } = req.body;
-    email = email.toLowerCase(); // Normalizamos el correo
+    const { email, password } = req.body;
 
-    // Buscar al usuario por email
-    const usuario = await Usuario.findOne({ email });
+    // 1. NORMALIZACIÓN: Convertimos el email a minúsculas siempre y quitamos espacios. 
+    const emailNormalizado = email?.toLowerCase().trim();
 
-    // Verificar si existe y si la contraseña coincide
-    if (usuario && (await usuario.coincidePassword(password))) {
-      generateToken(res, usuario._id);
-      
-      res.status(200).json({
+    // 2. IDENTIFICACIÓN: Buscamos en la base de datos
+    const usuario = await Usuario.findOne({ email: emailNormalizado });
+    
+    if (!usuario) {
+      return res.status(400).json({ error: 'No existe una cuenta con este correo electrónico.' });
+    }
+
+    // 3. CORROBORACIÓN: Comparamos la contraseña encriptada (usamos el método del modelo o bcrypt)
+    const passwordCorrecta = await usuario.coincidePassword(password);
+    
+    if (!passwordCorrecta) {
+      return res.status(400).json({ error: 'Contraseña incorrecta. Inténtalo de nuevo.' });
+    }
+
+    // 4. CREACIÓN DEL PASE (Token)
+    // Guardamos el ID en el payload para que el middleware pueda identificar al usuario
+    const payload = {
+      userId: usuario._id,
+      rol: usuario.rol
+    };
+
+    // Firmamos el token (30 días de duración)
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' });
+
+    // 5. RESPUESTA LIMPIA: Devolvemos el token y los datos del usuario
+    res.status(200).json({
+      token,
+      usuario: {
         _id: usuario._id,
         nombre: usuario.nombre,
         apellido: usuario.apellido,
         email: usuario.email,
         rol: usuario.rol
-      });
-    } else {
-      res.status(401).json({ error: 'Email o contraseña incorrectos' });
-    }
+      }
+    });
+    
   } catch (error) {
-    res.status(500).json({ error: 'Error en el servidor' });
+    console.error("Error en el loginUsuario:", error);
+    res.status(500).json({ error: 'Hubo un error en el servidor, intenta nuevamente.' });
   }
 };
 

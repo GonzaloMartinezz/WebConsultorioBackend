@@ -5,21 +5,19 @@ const Usuario = require('../models/Usuario');
 exports.protegerRuta = async (req, res, next) => {
   let token;
 
-  // 1. Buscamos el token en la cabecera (Formato: Bearer <token>)
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
-    token = req.headers.authorization.split(' ')[1];
+  // 1. Buscamos el token ÚNICAMENTE en la cabecera (Formato: Bearer <token>)
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
   } 
-  // 2. Si no hay cabecera, buscamos en la cookie (Compatibilidad anterior)
-  else if (req.cookies && req.cookies.jwt) {
-    token = req.cookies.jwt;
-  }
 
   if (token) {
     try {
       // Verificar y decodificar el token
       const decodificado = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Buscar al usuario en la BD (userId viene del token) y guardarlo en req.usuario
+      // Buscar al usuario en la BD (userId viene del token)
+      // Nota: Mantenemos decodificado.userId para que sea compatible con generateToken.js
       req.usuario = await Usuario.findById(decodificado.userId).select('-password');
       
       if (!req.usuario) {
