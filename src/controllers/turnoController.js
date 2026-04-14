@@ -215,3 +215,21 @@ exports.obtenerMisTurnos = async (req, res) => {
     res.status(500).json({ error: 'Error al buscar los turnos del paciente' });
   }
 };
+
+// @desc    Eliminar un turno permanentemente
+// @route   DELETE /api/turnos/:id
+// @access  Privado (Solo Admin)
+exports.eliminarTurno = async (req, res) => {
+  try {
+    const turnoId = req.params.id;
+    const turnoEliminado = await Turno.findByIdAndDelete(turnoId);
+    
+    if (!turnoEliminado) {
+      return res.status(404).json({ error: 'Turno no encontrado' });
+    }
+    
+    res.status(200).json({ mensaje: 'Turno eliminado correctamente' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al eliminar el turno', detalle: error.message });
+  }
+};
