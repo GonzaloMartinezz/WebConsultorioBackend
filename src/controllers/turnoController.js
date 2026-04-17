@@ -1,4 +1,5 @@
 const Turno = require('../models/Turno');
+const Paciente = require('../models/Paciente');
 const nodemailer = require('nodemailer');
 
 // Helper para enviar correo de confirmación con link de Google Calendar
@@ -127,7 +128,42 @@ const enviarEmailNPS = async (turno) => {
 // @access  Público (Cualquiera puede pedir un turno desde la web)
 exports.crearTurno = async (req, res) => {
   try {
-    const nuevoTurno = new Turno(req.body);
+    const { nombrePaciente, apellidoPaciente, dni, email, telefono, profesional, fecha, hora, motivo } = req.body;
+
+    // 1. Buscamos si el paciente ya existe por DNI en la agenda de contactos
+    let paciente = null;
+    if (dni) {
+      paciente = await Paciente.findOne({ dni });
+
+      // 2. Si no existe, lo creamos automáticamente
+      if (!paciente) {
+        paciente = new Paciente({
+          nombre: nombrePaciente,
+          apellido: apellidoPaciente,
+          dni,
+          email: email || '',
+          telefono: telefono || ''
+        });
+        await paciente.save();
+        console.log(`✅ Nuevo paciente registrado automáticamente: ${nombrePaciente} ${apellidoPaciente} (DNI: ${dni})`);
+      }
+    }
+
+    // 3. Creamos el turno, enlazándolo con el ID del paciente (si existe)
+    const nuevoTurno = new Turno({
+      pacienteId: paciente ? paciente._id : undefined,
+      nombrePaciente,
+      apellidoPaciente,
+      dni,
+      email,
+      telefono,
+      profesional,
+      fecha,
+      hora,
+      motivo,
+      estado: 'Pendiente'
+    });
+
     const turnoGuardado = await nuevoTurno.save();
     
     res.status(201).json({ 
@@ -135,6 +171,7 @@ exports.crearTurno = async (req, res) => {
       turno: turnoGuardado 
     });
   } catch (error) {
+    console.error('Error al crear turno:', error);
     res.status(400).json({ error: 'Error al solicitar el turno', detalle: error.message });
   }
 };
@@ -144,8 +181,10 @@ exports.crearTurno = async (req, res) => {
 // @access  Privado (Solo Admin)
 exports.obtenerTurnos = async (req, res) => {
   try {
-    // Busca todos los turnos y los ordena por fecha y hora
-    const turnos = await Turno.find().sort({ fecha: 1, hora: 1 });
+    // Busca todos los turnos, popula datos del paciente, y los ordena por fecha y hora
+    const turnos = await Turno.find()
+      .populate('pacienteId', 'nombre apellido dni telefono email estado')
+      .sort({ fecha: 1, hora: 1 });
     res.status(200).json(turnos);
   } catch (error) {
     console.error("Error al obtener turnos:", error);
@@ -158,17 +197,18 @@ exports.obtenerTurnos = async (req, res) => {
 // @access  Privado (Solo Admin)
 exports.actualizarEstadoTurno = async (req, res) => {
   try {
-    const { estado, fecha, hora } = req.body; // Recibirá 'Confirmado', 'Cancelado', etc. y opcional fecha/hora editados
+    const { estado, fecha, hora, notasConsulta } = req.body; // Recibirá 'Confirmado', 'Cancelado', etc. y opcional fecha/hora/notas
     const turnoId = req.params.id;
 
     // Validar que el estado sea permitido
-    if (!['Pendiente', 'Confirmado', 'Cancelado', 'Atendido', 'Finalizado'].includes(estado)) {
+    if (!['Pendiente', 'Confirmado', 'Cancelado', 'Atendido', 'Completado', 'Finalizado'].includes(estado)) {
       return res.status(400).json({ error: 'Estado no válido' });
     }
 
     const camposAActualizar = { estado };
     if (fecha) camposAActualizar.fecha = fecha;
     if (hora) camposAActualizar.hora = hora;
+    if (notasConsulta !== undefined) camposAActualizar.notasConsulta = notasConsulta;
 
     const turnoActualizado = await Turno.findByIdAndUpdate(
       turnoId, 
