@@ -2,6 +2,9 @@ const Usuario = require('../models/Usuario');
 const generateToken = require('../utils/generateToken');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // @desc    Registrar un nuevo usuario
 // @route   POST /api/auth/registrar
@@ -134,5 +137,61 @@ exports.recuperarPassword = async (req, res) => {
     res.status(200).json({ mensaje: 'Contraseña actualizada correctamente.' });
   } catch (error) {
     res.status(500).json({ error: 'Error al cambiar la contraseña.' });
+  }
+};
+
+// @desc    Login / Registro con Google
+// @route   POST /api/auth/google
+exports.googleLogin = async (req, res) => {
+  const { idToken } = req.body;
+  
+  if (!idToken) {
+    return res.status(400).json({ error: 'Token de Google no proporcionado' });
+  }
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    
+    const payload = ticket.getPayload();
+    const { email, given_name, family_name, sub } = payload;
+
+    // Buscar si el usuario ya existe por email
+    let usuario = await Usuario.findOne({ email: email.toLowerCase() });
+
+    if (!usuario) {
+      // Si no existe, lo creamos como paciente por defecto
+      usuario = await Usuario.create({
+        nombre: given_name || 'Usuario',
+        apellido: family_name || 'Google',
+        email: email.toLowerCase(),
+        password: sub, // Usamos el ID de Google como password inicial (será hasheado por el modelo)
+        rol: 'paciente'
+      });
+    }
+
+    // Generar el token JWT para nuestra App
+    const token = jwt.sign(
+      { userId: usuario._id, rol: usuario.rol },
+      process.env.JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    res.status(200).json({
+      token,
+      usuario: {
+        _id: usuario._id,
+        nombre: usuario.nombre,
+        apellido: usuario.apellido,
+        email: usuario.email,
+        rol: usuario.rol
+      }
+    });
+
+  } catch (error) {
+    console.error("Error en Google Auth:", error);
+    res.status(400).json({ error: 'Fallo la autenticación con Google' });
   }
 };

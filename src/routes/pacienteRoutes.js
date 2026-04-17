@@ -4,7 +4,8 @@ const {
   crearPaciente, 
   obtenerPacientes, 
   actualizarDiente, 
-  agregarHistoria 
+  agregarHistoria,
+  eliminarPaciente
 } = require('../controllers/pacienteController');
 const { protegerRuta, adminRole } = require('../middlewares/authMiddleware');
 
@@ -15,5 +16,6 @@ router.post('/', crearPaciente);
 router.get('/', obtenerPacientes);
 router.patch('/:id/odontograma', actualizarDiente);
 router.post('/:id/historia', agregarHistoria);
+router.delete('/:id', eliminarPaciente);
 
 module.exports = router;

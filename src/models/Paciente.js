@@ -17,9 +17,9 @@ const evolucionSchema = new mongoose.Schema({
 
 const pacienteSchema = new mongoose.Schema({
   nombre: { type: String, required: true },
-  apellido: { type: String, required: true },
-  dni: { type: String, required: true, unique: true },
-  telefono: { type: String, required: true },
+  apellido: { type: String }, // Opcional para registros rápidos
+  dni: { type: String, sparse: true, unique: true }, // Sparse permite múltiples nulls sin romper el unique
+  telefono: { type: String }, // Opcional para registros rápidos
   email: { type: String },
   fechaNacimiento: { type: String },
   estado: { 

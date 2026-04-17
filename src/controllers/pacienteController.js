@@ -72,3 +72,15 @@ exports.agregarHistoria = async (req, res) => {
     res.status(500).json({ error: 'Error al agregar historia', detalle: error.message });
   }
 };
+// @desc    Eliminar un paciente definitivamente
+// @route   DELETE /api/pacientes/:id
+exports.eliminarPaciente = async (req, res) => {
+  try {
+    const paciente = await Paciente.findByIdAndDelete(req.params.id);
+    if (!paciente) return res.status(404).json({ error: 'Paciente no encontrado' });
+    
+    res.status(200).json({ mensaje: 'Paciente eliminado correctamente' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al eliminar paciente', detalle: error.message });
+  }
+};

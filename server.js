@@ -31,7 +31,7 @@ app.use(cors({
     'http://localhost:5173' // Dejamos el local para que puedas seguir programando
   ],
   credentials: true, // Fundamental para que pasen los Tokens/Cookies de sesión
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
