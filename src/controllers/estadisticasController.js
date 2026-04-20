@@ -21,16 +21,23 @@ exports.obtenerEstadisticas = async (req, res) => {
     const turnosCancelados = todosTurnos.filter(t => t.estado === 'Cancelado').length;
     const turnosAtendidos = todosTurnos.filter(t => ['Atendido', 'Completado', 'Finalizado'].includes(t.estado)).length;
 
-    // 4. Calcular distribución por profesional
-    const cargaProfesionales = {};
+    // 4. Calcular distribución por profesional (Estandarizado)
+    const cargaProfesionales = {
+      "Dr. Adolfo Martínez": 0,
+      "Dra. Erina Carcara": 0,
+      "Otros/Sin asignar": 0
+    };
+
     todosTurnos.forEach(t => {
-      const prof = t.profesional || 'Sin asignar';
-      cargaProfesionales[prof] = (cargaProfesionales[prof] || 0) + 1;
+      const profStr = (t.profesional || '').toLowerCase();
+      if (profStr.includes('adolfo') || profStr.includes('martinez') || profStr.includes('martínez')) {
+        cargaProfesionales["Dr. Adolfo Martínez"]++;
+      } else if (profStr.includes('erina') || profStr.includes('carcara')) {
+        cargaProfesionales["Dra. Erina Carcara"]++;
+      } else {
+        cargaProfesionales["Otros/Sin asignar"]++;
+      }
     });
-    // Mantener formato legacy para compatibilidad
-    cargaProfesionales.Adolfo = cargaProfesionales['Dr. Adolfo'] || cargaProfesionales['Dr. Adolfo Martinez'] || cargaProfesionales['Dr. Adolfo Martínez'] || 0;
-    cargaProfesionales.Erina = cargaProfesionales['Dra. Erina'] || cargaProfesionales['Dra. Erina Carcara'] || 0;
-    cargaProfesionales.total = todosTurnos.length;
 
     // 5. Calcular motivos de consulta (más categorías)
     const motivos = { 
@@ -50,12 +57,24 @@ exports.obtenerEstadisticas = async (req, res) => {
       else motivos.otros++;
     });
 
-    // 6. Turnos por mes
+    // 6. Turnos por mes (Robustez en el parseo de fecha)
     const turnosPorMes = {};
     todosTurnos.forEach(t => {
       if (t.fecha) {
-        const mesKey = t.fecha.substring(0, 7); // YYYY-MM
-        turnosPorMes[mesKey] = (turnosPorMes[mesKey] || 0) + 1;
+        // Intentamos detectar YYYY-MM-DD o DD-MM-YYYY
+        let mesKey = "";
+        if (t.fecha.includes('-')) {
+          const partes = t.fecha.split('-');
+          if (partes[0].length === 4) mesKey = `${partes[0]}-${partes[1]}`; // YYYY-MM
+          else mesKey = `${partes[2]}-${partes[1]}`; // DD-MM-YYYY
+        } else if (t.fecha.includes('/')) {
+          const partes = t.fecha.split('/');
+          if (partes[2].length === 4) mesKey = `${partes[2]}-${partes[1]}`; // DD/MM/YYYY
+        }
+
+        if (mesKey) {
+          turnosPorMes[mesKey] = (turnosPorMes[mesKey] || 0) + 1;
+        }
       }
     });
 

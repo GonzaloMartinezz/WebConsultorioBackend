@@ -45,3 +45,49 @@ exports.actualizarFicha = async (req, res) => {
     res.status(500).json({ error: "Error al guardar la ficha médica" });
   }
 };
+
+// DELETE /api/fichas/:id/historial/:consultaId -> Eliminar una consulta del historial
+exports.eliminarConsultaHistorial = async (req, res) => {
+  try {
+    const { id, consultaId } = req.params;
+    const fichaActualizada = await FichaClinica.findOneAndUpdate(
+      { pacienteId: id },
+      { $pull: { historialConsultas: { _id: consultaId } } },
+      { new: true }
+    );
+    res.status(200).json(fichaActualizada);
+  } catch (error) {
+    console.error("Error al eliminar consulta del historial:", error);
+    res.status(500).json({ error: "Error al eliminar consulta" });
+  }
+};
+
+// PUT /api/fichas/:id/historial/:consultaId -> Editar una consulta del historial
+exports.editarConsultaHistorial = async (req, res) => {
+  try {
+    const { id, consultaId } = req.params;
+    const { motivo, profesional, tratamientoRealizado, fecha } = req.body;
+    
+    // Crear el objeto de actualización con los campos enviados
+    const unsets = {};
+    if (!tratamientoRealizado) unsets['historialConsultas.$.tratamientoRealizado'] = 1;
+
+    const fichaActualizada = await FichaClinica.findOneAndUpdate(
+      { pacienteId: id, "historialConsultas._id": consultaId },
+      { 
+        $set: { 
+          "historialConsultas.$.motivo": motivo,
+          "historialConsultas.$.profesional": profesional,
+          ...(tratamientoRealizado && { "historialConsultas.$.tratamientoRealizado": tratamientoRealizado }),
+          ...(fecha && { "historialConsultas.$.fecha": fecha })
+        },
+        $unset: unsets 
+      },
+      { new: true }
+    );
+    res.status(200).json(fichaActualizada);
+  } catch (error) {
+    console.error("Error al editar consulta del historial:", error);
+    res.status(500).json({ error: "Error al editar consulta" });
+  }
+};

@@ -72,15 +72,27 @@ exports.agregarHistoria = async (req, res) => {
     res.status(500).json({ error: 'Error al agregar historia', detalle: error.message });
   }
 };
-// @desc    Eliminar un paciente definitivamente
+// @desc    Eliminar un paciente definitivamente y sus turnos
 // @route   DELETE /api/pacientes/:id
 exports.eliminarPaciente = async (req, res) => {
   try {
-    const paciente = await Paciente.findByIdAndDelete(req.params.id);
+    const paciente = await Paciente.findById(req.params.id);
     if (!paciente) return res.status(404).json({ error: 'Paciente no encontrado' });
+
+    // 1. Eliminar turnos vinculados a este paciente
+    // En el modelo de Turno, el campo se llama 'pacienteId'
+    const Turno = require('../models/Turno');
+    await Turno.deleteMany({ pacienteId: req.params.id });
+
+    // 2. Eliminar la Ficha Clínica asociada si existiera
+    const FichaClinica = require('../models/FichaClinica');
+    await FichaClinica.findOneAndDelete({ pacienteId: req.params.id });
+
+    // 3. Eliminar finalmente el modelo del Paciente
+    await Paciente.findByIdAndDelete(req.params.id);
     
-    res.status(200).json({ mensaje: 'Paciente eliminado correctamente' });
+    res.status(200).json({ mensaje: 'Paciente y todos sus registros (turnos y ficha) fueron eliminados correctamente' });
   } catch (error) {
-    res.status(500).json({ error: 'Error al eliminar paciente', detalle: error.message });
+    res.status(500).json({ error: 'Error al eliminar paciente y sus datos vinculados', detalle: error.message });
   }
 };
